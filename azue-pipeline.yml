@@ -1,0 +1,67 @@
+trigger:
+- main # Change this to your branch name if different
+
+resources:
+- repo: self
+
+pool:
+  name: 'azureagent'
+
+steps:
+# Install Terraform
+- task: Bash@3
+  displayName: 'Checked Installation of Terraform'
+  inputs:
+    targetType: 'inline'
+    script: |
+      terraform --version
+
+
+# Configure AWS CLI using the Service Connection
+- task: AWSCLI@1
+  displayName: 'Verify AWS Connection'
+  inputs:
+    awsCredentials: 'azure_to_aws_connection' # Replace with your actual service connection name
+    regionName: 'us-east-1'
+    awscommand: 's3' # AWS CLI command to validate credentials
+    awsSubCommand: 'ls'
+
+# Initialize Terraform
+- task: Bash@3
+  displayName: 'Terraform Init'
+  inputs:
+    targetType: 'inline'
+    script: |
+      terraform init
+
+- task: Bash@3
+  displayName: 'List Files in Current Directory'
+  inputs:
+    targetType: 'inline'
+    script: |
+      pwd
+      ls -la
+
+# Validate Terraform Configuration
+- task: Bash@3
+  displayName: 'Terraform Validate'
+  inputs:
+    targetType: 'inline'
+    script: |
+      terraform validate
+
+# Terraform Plan
+- task: Bash@3
+  displayName: 'Terraform Plan'
+  inputs:
+    targetType: 'inline'
+    script: |
+      terraform plan -out=tfplan
+
+# # Terraform Apply
+# - task: Bash@3
+#   displayName: 'Terraform Apply'
+#   inputs:
+#     targetType: 'inline'
+#     script: |
+#       terraform apply -auto-approve tfplan

@@ -1,0 +1,40 @@
+trigger:
+  branches:
+    include:
+      - test_terraform_ado
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: deploy_stage
+  displayName: Terraform Deployment
+  jobs:
+  - job: deploy_job
+    displayName: Terraform Job
+    steps:
+    - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@1
+      displayName: Install Terraform
+      inputs:
+        terraformVersion: '1.10.4'
+
+    - script: |
+        echo "Verifying Terraform installation..."
+        terraform -version
+      displayName: Verify Terraform Installation
+
+    - script: |
+        echo "Checking if Terraform is installed correctly..."
+        ls -al /opt/hostedtoolcache/terraform/1.10.4/x64/
+        terraform -version
+      displayName: Verify Terraform Binary
+
+    - task: TerraformTaskV4@4
+      displayName: Terraform Init
+      inputs:
+        provider: 'aws'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/aws'
+        backendServiceAWS: 'AWS Econet'
+        backendAWSBucketName: 'terraform-econet'
+        backendAWSKey: 'terraform.tfstate'
